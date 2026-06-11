@@ -1,88 +1,114 @@
 <script setup>
-import { FileText, Calendar, Image, Brain } from 'lucide-vue-next'
+import { Home, FileText, BookOpen } from 'lucide-vue-next'
 
-const props = defineProps({
+defineProps({
   activeTab: {
     type: String,
-    default: 'notes'
+    default: 'home'
   }
 })
 
 const emit = defineEmits(['change-tab'])
 
-const tabs = [
-  { id: 'notes', name: '笔记', icon: FileText },
-  { id: 'images', name: '图片', icon: Image },
-  { id: 'schedules', name: '日程', icon: Calendar },
-  { id: 'chat', name: '问答', icon: Brain }
+const menuItems = [
+  { id: 'home', label: '主页', icon: Home },
+  { id: 'notes', label: '记事本', icon: FileText }
 ]
-
-const changeTab = (tabId) => {
-  emit('change-tab', tabId)
-}
 </script>
 
 <template>
-  <aside class="sidebar">
+  <header class="sidebar">
+    <div class="sidebar-left">
+      <BookOpen class="logo-icon" />
+      <span class="logo-text">AI Notepad</span>
+    </div>
     <nav class="sidebar-nav">
-      <button 
-        v-for="tab in tabs" 
-        :key="tab.id"
-        @click="changeTab(tab.id)"
-        class="nav-item"
-        :class="{ active: activeTab === tab.id }"
-      >
-        <component :is="tab.icon" class="nav-icon" />
-        <span class="nav-text">{{ tab.name }}</span>
+      <button v-for="item in menuItems" :key="item.id" @click="emit('change-tab', item.id)" class="nav-item"
+        :class="{ active: activeTab === item.id }">
+        <component :is="item.icon" class="nav-icon" />
+        <span class="nav-label">{{ item.label }}</span>
       </button>
     </nav>
-  </aside>
+  </header>
 </template>
 
 <style scoped>
 .sidebar {
-  width: 200px;
-  background: white;
-  border-right: 1px solid #e5e7eb;
-  padding: 16px 0;
+  background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .sidebar-nav {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  gap: 12px;
 }
 
 .nav-item {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  justify-content: center;
+  padding: 10px 20px;
   border: none;
   background: transparent;
+  border-radius: 10px;
   cursor: pointer;
-  font-size: 14px;
-  color: #6b7280;
-  transition: all 0.2s;
-  border-radius: 0;
+  transition: all 0.3s;
+  gap: 8px;
 }
 
 .nav-item:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-item.active {
-  background: #e0e7ff;
-  color: #4f46e5;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
 }
 
 .nav-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.8);
+  transition: color 0.3s;
 }
 
-.nav-text {
+.nav-item.active .nav-icon {
+  color: white;
+}
+
+.nav-label {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
   font-weight: 500;
+  transition: color 0.3s;
+}
+
+.nav-item.active .nav-label {
+  color: white;
 }
 </style>

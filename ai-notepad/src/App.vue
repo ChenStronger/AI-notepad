@@ -1,42 +1,24 @@
 <script setup>
 import { ref } from 'vue'
-import Header from '@/components/layout/Header.vue'
 import Sidebar from '@/components/layout/Sidebar.vue'
+import HomeView from '@/views/HomeView.vue'
 import NoteList from '@/views/Notes/NoteList.vue'
-import ImageGallery from '@/views/Images/ImageGallery.vue'
-import ScheduleCalendar from '@/views/Schedules/ScheduleCalendar.vue'
-import KnowledgeChat from '@/views/Chat/KnowledgeChat.vue'
 
-const currentTab = ref('notes')
+const currentTab = ref('home')
 
 const changeTab = (tabId) => {
   currentTab.value = tabId
-}
-
-const handleGoToSchedules = () => {
-  currentTab.value = 'schedules'
-}
-
-const handleUserClick = () => {
-  // 用户点击可以显示用户菜单或设置页面，这里暂时只是切换到笔记页面
-  currentTab.value = 'notes'
 }
 </script>
 
 <template>
   <div class="app-container">
-    <Header title="AI 记事本" @go-to-schedules="handleGoToSchedules" @user-click="handleUserClick" />
+    <Sidebar :active-tab="currentTab" @change-tab="changeTab" />
 
-    <div class="app-body">
-      <Sidebar :active-tab="currentTab" @change-tab="changeTab" />
-
-      <main class="app-main">
-        <NoteList v-if="currentTab === 'notes'" />
-        <ImageGallery v-else-if="currentTab === 'images'" />
-        <ScheduleCalendar v-else-if="currentTab === 'schedules'" />
-        <KnowledgeChat v-else-if="currentTab === 'chat'" />
-      </main>
-    </div>
+    <main class="app-main">
+      <HomeView v-if="currentTab === 'home'" />
+      <NoteList v-else-if="currentTab === 'notes'" />
+    </main>
   </div>
 </template>
 
@@ -45,17 +27,12 @@ const handleUserClick = () => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-.app-body {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
+  background: #f8fafc;
 }
 
 .app-main {
   flex: 1;
-  padding: 24px;
   overflow-y: auto;
+  padding: 20px;
 }
 </style>

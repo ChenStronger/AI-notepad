@@ -1,13 +1,19 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { FileText, Edit3, Trash2, Plus, Search } from 'lucide-vue-next'
+import { FileText, Edit3, Trash2, Plus, Search, Calendar, Clock, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-vue-next'
 import { useNoteStore } from '@/stores/note'
-import { getRelativeTime } from '@/utils/format'
 import NoteEditor from './NoteEditor.vue'
 
 const noteStore = useNoteStore()
 const showEditor = ref(false)
 const editingNote = ref(null)
+const searchQuery = ref('')
+const selectedYear = ref(new Date().getFullYear())
+const selectedMonth = ref(String(new Date().getMonth() + 1).padStart(2, '0'))
+const selectedDay = ref(String(new Date().getDate()).padStart(2, '0'))
+
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 const openEditor = (note = null) => {
   editingNote.value = note
@@ -24,52 +30,183 @@ const deleteNote = (id) => {
     noteStore.deleteNote(id)
   }
 }
+
+const years = Array.from({ length: 50 }, (_, i) => 2024 + i)
+const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
+const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'))
+
+const allFilteredNotes = computed(() => {
+  let notes = noteStore.notes
+
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase()
+    notes = notes.filter(note =>
+      note.title?.toLowerCase().includes(query) ||
+      note.content?.toLowerCase().includes(query)
+    )
+  }
+
+  if (selectedYear.value && selectedMonth.value && selectedDay.value) {
+    const filterDate = `${selectedYear.value}-${selectedMonth.value}-${selectedDay.value}`
+    notes = notes.filter(note => {
+      const noteDate = new Date(note.createdAt).toISOString().split('T')[0]
+      return noteDate === filterDate
+    })
+  }
+
+  return notes.length > 0 ? notes : [
+    { id: 1, title: 'Vue3 学习笔记', content: '组合式API基础、响应式原理、生命周期钩子...', createdAt: new Date('2024-01-15').toISOString() },
+    { id: 2, title: '项目需求文档', content: '用户登录模块、数据统计分析、报表导出功能...', createdAt: new Date('2024-01-16').toISOString() },
+    { id: 3, title: '会议记录', content: '讨论了Q1目标、技术方案选型、时间节点安排...', createdAt: new Date('2024-01-17').toISOString() },
+    { id: 4, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
+    { id: 5, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
+    { id: 6, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
+    { id: 7, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
+    { id: 8, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
+    { id: 9, title: '技术方案设计', content: '微服务架构设计、数据库选型、接口规范制定...', createdAt: new Date('2024-01-19').toISOString() },
+    { id: 10, title: '数据库设计', content: '数据库表结构设计、索引优化、数据迁移方案...', createdAt: new Date('2024-01-20').toISOString() },
+    { id: 11, title: 'API接口文档', content: 'RESTful API设计规范、接口认证方式、错误处理...', createdAt: new Date('2024-01-21').toISOString() },
+    { id: 12, title: '前端性能优化', content: '代码分割、懒加载、缓存策略、CDN加速...', createdAt: new Date('2024-01-22').toISOString() }
+  ]
+})
+
+const totalPages = computed(() => {
+  return Math.ceil(allFilteredNotes.value.length / pageSize.value)
+})
+
+const filteredNotes = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  return allFilteredNotes.value.slice(start, end)
+})
+
+const goToPage = (page) => {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+}
+
+const goToFirstPage = () => {
+  currentPage.value = 1
+}
+
+const goToPrevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--
+  }
+}
+
+const goToNextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++
+  }
+}
+
+const goToLastPage = () => {
+  currentPage.value = totalPages.value
+}
+
+const handleSearch = () => {
+  currentPage.value = 1
+}
 </script>
 
 <template>
   <div class="note-list">
-    <div class="list-header">
-      <h2>笔记列表</h2>
-      <button @click="openEditor()" class="add-btn">
-        <Plus class="icon" />
-        新建笔记
-      </button>
+
+    <div class="search-section">
+      <div class="search-bar">
+        <div class="search-input-wrapper">
+          <Search class="search-icon" />
+          <input v-model="searchQuery" type="text" placeholder="搜索笔记标题或内容..." class="search-input" />
+        </div>
+
+        <div class="date-selector">
+          <select v-model="selectedYear" class="date-select year-select">
+            <option value="">年份</option>
+            <option v-for="year in years" :key="year" :value="year">{{ year }}</option>
+          </select>
+          <select v-model="selectedMonth" class="date-select month-select">
+            <option value="">月份</option>
+            <option v-for="month in months" :key="month" :value="month">{{ month }}月</option>
+          </select>
+          <select v-model="selectedDay" class="date-select day-select">
+            <option value="">日期</option>
+            <option v-for="day in days" :key="day" :value="day">{{ day }}日</option>
+          </select>
+        </div>
+        <button @click="handleSearch" class="search-btn">
+          <Search class="btn-icon" />
+          <span>搜索</span>
+        </button>
+        <button @click="openEditor()" class="add-btn">
+          <Plus class="icon" />
+          <span>新建笔记</span>
+        </button>
+
+      </div>
     </div>
 
-    <div class="search-bar">
-      <Search class="search-icon" />
-      <input v-model="noteStore.searchQuery" type="text" placeholder="搜索笔记..." class="search-input" />
-    </div>
+    <div class="notes-table-container">
+      <div class="table-header">
+        <div class="th th-index">序号</div>
+        <div class="th th-title">标题</div>
+        <div class="th th-time">时间</div>
+        <div class="th th-remark">备注</div>
+        <div class="th th-action">操作</div>
+      </div>
 
-    <div v-if="noteStore.filteredNotes.length === 0" class="empty-state">
-      <FileText class="empty-icon" />
-      <p>暂无笔记</p>
-      <p class="hint">点击上方按钮创建新笔记</p>
-    </div>
-
-    <div v-else class="notes-grid">
-      <div v-for="note in noteStore.filteredNotes" :key="note.id" class="note-card">
-        <div class="note-header">
-          <h3 class="note-title">{{ note.title || '无标题' }}</h3>
-          <div class="note-actions">
+      <div class="table-body">
+        <div v-for="(note, index) in filteredNotes" :key="note.id" class="table-row">
+          <div class="td td-index">{{ index + 1 }}</div>
+          <div class="td td-title" @click="openEditor(note)">{{ note.title || '无标题' }}</div>
+          <div class="td td-time">{{ new Date(note.createdAt).toLocaleString('zh-CN') }}</div>
+          <div class="td td-remark">{{ note.content?.substring(0, 30) }}{{ note.content?.length > 30 ? '...' : '' }}
+          </div>
+          <div class="td td-action">
             <button @click="openEditor(note)" class="action-btn edit-btn">
-              <Edit3 class="icon" />
+              <Edit3 class="btn-icon" />
+              <span>编辑</span>
             </button>
             <button @click="deleteNote(note.id)" class="action-btn delete-btn">
-              <Trash2 class="icon" />
+              <Trash2 class="btn-icon" />
+              <span>删除</span>
             </button>
           </div>
         </div>
 
-        <p class="note-preview">{{ note.content?.substring(0, 100) }}{{ note.content?.length > 100 ? '...' : '' }}</p>
+        <div v-if="filteredNotes.length === 0" class="empty-row">
+          <div class="empty-content">
+            <FileText class="empty-icon" />
+            <span>暂无笔记</span>
+          </div>
+        </div>
+      </div>
 
-        <div v-if="note.images?.length > 0" class="note-images">
-          <img :src="note.images[0]" alt="笔记图片" class="preview-image" />
+      <div v-if="totalPages > 1" class="pagination">
+        <button @click="goToFirstPage" :disabled="currentPage === 1" class="pagination-btn first-btn">
+          <ChevronsLeft class="pagination-icon" />
+        </button>
+        <button @click="goToPrevPage" :disabled="currentPage === 1" class="pagination-btn prev-btn">
+          <ChevronLeft class="pagination-icon" />
+        </button>
+
+        <div class="page-numbers">
+          <span v-for="page in totalPages" :key="page" @click="goToPage(page)" class="page-number"
+            :class="{ active: currentPage === page }">
+            {{ page }}
+          </span>
         </div>
 
-        <div class="note-meta">
-          <span class="time">{{ getRelativeTime(note.createdAt) }}</span>
-        </div>
+        <button @click="goToNextPage" :disabled="currentPage === totalPages" class="pagination-btn next-btn">
+          <ChevronRight class="pagination-icon" />
+        </button>
+        <button @click="goToLastPage" :disabled="currentPage === totalPages" class="pagination-btn last-btn">
+          <ChevronsRight class="pagination-icon" />
+        </button>
+
+        <span class="pagination-info">
+          第 {{ currentPage }} / {{ totalPages }} 页
+        </span>
       </div>
     </div>
 
@@ -79,204 +216,495 @@ const deleteNote = (id) => {
 
 <style scoped>
 .note-list {
-  height: 100%;
+  min-height: calc(100vh - 120px);
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #f8fafc 100%);
+  background-attachment: fixed;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.header-info {
   display: flex;
   flex-direction: column;
 }
 
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.list-header h2 {
+.header-info h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 36px;
+  font-weight: 700;
   color: #1f2937;
 }
 
-.add-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  background: #4f46e5;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
+.header-subtitle {
+  margin: 8px 0 0 0;
+  font-size: 16px;
+  color: #6b7280;
 }
 
-.add-btn:hover {
-  background: #4338ca;
-}
-
-.add-btn .icon {
-  width: 16px;
-  height: 16px;
+.search-section {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
 }
 
 .search-bar {
   display: flex;
+  gap: 16px;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 8px 12px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+}
+
+.search-input-wrapper {
+  flex: 2;
+  position: relative;
 }
 
 .search-icon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 18px;
   height: 18px;
   color: #9ca3af;
+  z-index: 1;
 }
 
 .search-input {
-  flex: 1;
-  border: none;
+  width: 100%;
+  padding: 12px 16px 12px 48px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
   font-size: 14px;
-  outline: none;
+  transition: all 0.3s;
 }
 
-.empty-state {
+.search-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.date-selector {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+}
+
+.date-select {
+  flex: 1;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 12px center;
+  background-repeat: no-repeat;
+  background-size: 14px;
+  padding: 12px 32px 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.date-select:hover {
+  border-color: #d1d5db;
+}
+
+.date-select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.add-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+}
+
+.add-btn .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.search-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
+.search-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+}
+
+.search-btn .btn-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.notes-table-container {
+  flex: 1;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+
+  border: 1px solid #e5e7eb;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+}
+
+.table-header {
+  display: flex;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.th {
+  padding: 18px 16px;
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: 0.8px;
+  box-sizing: border-box;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.th-index {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.th-title {
+  width: 20%;
+  text-align: center;
+}
+
+.th-time {
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.th-remark {
+  width: 50%;
+  text-align: center;
+}
+
+.th-action {
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.table-body {
   flex: 1;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.table-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.table-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #6366f1 0%, #8b5cf6 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.table-row:hover::before {
+  opacity: 1;
+}
+
+.table-row:hover {
+  background-color: #f8fafc;
+  transform: translateX(2px);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+  border-radius: 0 0 20px 20px;
+}
+
+.td {
+  padding: 16px 20px;
+  font-size: 13px;
+  color: #374151;
+  box-sizing: border-box;
+}
+
+.td-index {
+  width: 60px;
+  flex-shrink: 0;
+  color: #9ca3af;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+}
+
+.td-title {
+  width: 20%;
+  font-weight: 500;
+  cursor: pointer;
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: color 0.2s;
+  text-align: center;
+}
+
+.td-title:hover {
+  color: #6366f1;
+}
+
+.td-time {
+  width: 160px;
+  flex-shrink: 0;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+}
+
+.td-remark {
+  width: 50%;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  padding-right: 24px;
+}
+
+.td-action {
+  width: 160px;
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.btn-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #6366f1;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+}
+
+.edit-btn:hover {
+  background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 100%);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+  transform: translateY(-1px);
+}
+
+.edit-btn:active {
+  transform: translateY(0);
+}
+
+.delete-btn {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.15);
+}
+
+.delete-btn:hover {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25);
+  transform: translateY(-1px);
+}
+
+.delete-btn:active {
+  transform: translateY(0);
+}
+
+.pagination {
+  display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-top: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+
+.pagination-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #f0f5ff;
+  transform: translateY(-1px);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-icon {
+  width: 16px;
+  height: 16px;
+  color: #6366f1;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 4px;
+}
+
+.page-number {
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.page-number:hover {
+  background: #f0f5ff;
+  color: #6366f1;
+}
+
+.page-number.active {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.pagination-info {
+  margin-left: 12px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.empty-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+.empty-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
   color: #9ca3af;
 }
 
 .empty-icon {
-  width: 64px;
-  height: 64px;
-  margin-bottom: 16px;
+  width: 48px;
+  height: 48px;
 }
 
-.empty-state p {
-  margin: 4px 0;
-}
+@media (max-width: 900px) {
+  .search-bar {
+    flex-wrap: wrap;
+  }
 
-.empty-state .hint {
-  font-size: 12px;
-  color: #d1d5db;
-}
+  .search-input-wrapper {
+    width: 100%;
+  }
 
-.notes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-  overflow-y: auto;
-  flex: 1;
-}
+  .date-selector {
+    width: 100%;
+  }
 
-.note-card {
-  background: white;
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  transition: all 0.2s;
-}
+  .th-time,
+  .td-time {
+    display: none;
+  }
 
-.note-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
+  .th-action {
+    width: 120px;
+  }
 
-.note-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.note-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.note-actions {
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.note-card:hover .note-actions {
-  opacity: 1;
-}
-
-.action-btn {
-  width: 28px;
-  height: 28px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-}
-
-.action-btn .icon {
-  width: 16px;
-  height: 16px;
-}
-
-.edit-btn:hover {
-  background: #e0e7ff;
-}
-
-.edit-btn .icon {
-  color: #4f46e5;
-}
-
-.delete-btn:hover {
-  background: #fee2e2;
-}
-
-.delete-btn .icon {
-  color: #dc2626;
-}
-
-.note-preview {
-  margin: 0;
-  font-size: 14px;
-  color: #6b7280;
-  line-height: 1.5;
-}
-
-.note-images {
-  margin-top: 12px;
-}
-
-.preview-image {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.note-meta {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f3f4f6;
-}
-
-.time {
-  font-size: 12px;
-  color: #9ca3af;
+  .td-action {
+    width: 120px;
+  }
 }
 </style>
