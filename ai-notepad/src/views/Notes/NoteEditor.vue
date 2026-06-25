@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { Save, X, Calendar, Clock } from 'lucide-vue-next'
+import { Save, X } from 'lucide-vue-next'
 import { useNoteStore } from '@/stores/note'
 
 const props = defineProps({
@@ -14,9 +14,7 @@ const isEdit = ref(false)
 const saving = ref(false)
 const form = ref({
   title: '',
-  content: '',
-  date: '',
-  time: ''
+  content: ''
 })
 
 watch(() => props.note, (newNote) => {
@@ -24,18 +22,13 @@ watch(() => props.note, (newNote) => {
     isEdit.value = true
     form.value = {
       title: newNote.title || '',
-      content: newNote.content || '',
-      date: newNote.date || '',
-      time: newNote.time || ''
+      content: newNote.content || ''
     }
   } else {
     isEdit.value = false
-    const now = new Date()
     form.value = {
       title: '',
-      content: '',
-      date: now.toISOString().split('T')[0],
-      time: now.toTimeString().slice(0, 5)
+      content: ''
     }
   }
 }, { immediate: true })
@@ -81,24 +74,6 @@ const saveNote = async () => {
 
       <div class="editor-body">
         <input v-model="form.title" type="text" placeholder="输入标题..." class="note-title-input" />
-
-        <div class="datetime-row">
-          <div class="datetime-item">
-            <label class="datetime-label">
-              <Calendar class="label-icon" />
-              <span>日期</span>
-            </label>
-            <input v-model="form.date" type="date" class="datetime-input date-input" />
-          </div>
-
-          <div class="datetime-item">
-            <label class="datetime-label">
-              <Clock class="label-icon" />
-              <span>时间</span>
-            </label>
-            <input v-model="form.time" type="time" class="datetime-input time-input" />
-          </div>
-        </div>
 
         <textarea v-model="form.content" placeholder="输入笔记内容..." class="note-content" rows="8"></textarea>
       </div>
@@ -226,62 +201,6 @@ const saveNote = async () => {
   outline: none;
   border-color: #6366f1;
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
-
-.datetime-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.datetime-item {
-  flex: 1;
-}
-
-.datetime-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #6b7280;
-  margin-bottom: 8px;
-}
-
-.label-icon {
-  width: 16px;
-  height: 16px;
-  color: #6366f1;
-}
-
-.datetime-input {
-  width: 100%;
-  padding: 14px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 15px;
-  transition: all 0.3s;
-  box-sizing: border-box;
-  background: #fafafa;
-}
-
-.datetime-input:focus {
-  outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
-  background: white;
-}
-
-.datetime-input:hover {
-  border-color: #cbd5e1;
-}
-
-.date-input {
-  color: #374151;
-}
-
-.time-input {
-  color: #374151;
 }
 
 .note-content {

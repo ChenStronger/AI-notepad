@@ -2,16 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a56972ed-0be9-4253-ad68-77cb66b3bf47" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ai-notepad/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/src/App.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ai-notepad/src/api/notes.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/src/api/notes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ai-notepad/src/components/layout/Sidebar.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/src/components/layout/Sidebar.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ai-notepad/src/stores/note.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/src/stores/note.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ai-notepad/src/views/HomeView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/src/views/HomeView.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ai-notepad/jsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/jsconfig.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ai-notepad/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ai-notepad/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ai-notepad/src/views/Notes/NoteEditor.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/src/views/Notes/NoteEditor.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../ai-notepad/src/views/Notes/NoteList.vue" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/src/views/Notes/NoteList.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../ai-notepad/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/../ai-notepad/vite.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/chroma_db/5b7214fc-3c45-4ecf-b33f-e03d7b197969/data_level0.bin" beforeDir="false" afterPath="$PROJECT_DIR$/data/chroma_db/5b7214fc-3c45-4ecf-b33f-e03d7b197969/data_level0.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/chroma_db/5b7214fc-3c45-4ecf-b33f-e03d7b197969/length.bin" beforeDir="false" afterPath="$PROJECT_DIR$/data/chroma_db/5b7214fc-3c45-4ecf-b33f-e03d7b197969/length.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/chroma_db/chroma.sqlite3" beforeDir="false" afterPath="$PROJECT_DIR$/data/chroma_db/chroma.sqlite3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/documents/c6d148dd-9b63-41da-9e16-2db80bc6c4c3.txt" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

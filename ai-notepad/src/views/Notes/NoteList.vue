@@ -54,7 +54,7 @@ const allFilteredNotes = computed(() => {
   // 日期过滤：支持年份、月份、日期单独或组合搜索
   if (selectedYear.value || selectedMonth.value || selectedDay.value) {
     notes = notes.filter(note => {
-      const noteDate = new Date(note.createdAt || note.created_at)
+      const noteDate = new Date(note.updated_at || note.created_at || note.createdAt)
       const noteYear = noteDate.getFullYear().toString()
       const noteMonth = String(noteDate.getMonth() + 1).padStart(2, '0')
       const noteDay = String(noteDate.getDate()).padStart(2, '0')
@@ -169,7 +169,7 @@ const formatDate = (dateStr) => {
         <div class="th th-index">序号</div>
         <div class="th th-title">标题</div>
         <div class="th th-time">时间</div>
-        <div class="th th-remark">备注</div>
+        <div class="th th-remark">内容</div>
         <div class="th th-action">操作</div>
       </div>
 
@@ -177,7 +177,7 @@ const formatDate = (dateStr) => {
         <div v-for="(note, index) in filteredNotes" :key="note.id" class="table-row">
           <div class="td td-index">{{ index + 1 }}</div>
           <div class="td td-title" @click="openEditor(note)">{{ note.title || '无标题' }}</div>
-          <div class="td td-time">{{ formatDate(note.created_at || note.createdAt) }}</div>
+          <div class="td td-time">{{ formatDate(note.updated_at || note.created_at || note.createdAt) }}</div>
           <div class="td td-remark">{{ note.content?.substring(0, 30) }}{{ note.content?.length > 30 ? '...' : '' }}
           </div>
           <div class="td td-action">

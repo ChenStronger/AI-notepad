@@ -6,7 +6,7 @@ import { useKnowledgeStore } from '@/stores/knowledge'
 const knowledgeStore = useKnowledgeStore()
 
 const messages = ref([
-  { id: 1, type: 'bot', content: '您好！我是您的AI助手，基于您的知识库回答问题。请上传文档到知识库后提问。', time: '刚刚', sources: [] }
+  { id: 1, type: 'bot', content: '您好！我是您的AI助手，可以根据您的知识库回答问题。', sources: [] }
 ])
 
 const newMessage = ref('')
@@ -28,8 +28,7 @@ const sendMessage = async () => {
   messages.value.push({
     id: messages.value.length + 1,
     type: 'user',
-    content: userQuestion,
-    time: '刚刚'
+    content: userQuestion
   })
 
   newMessage.value = ''
@@ -47,7 +46,6 @@ const sendMessage = async () => {
       id: messages.value.length + 1,
       type: 'bot',
       content: response.answer || '抱歉，暂时无法回答这个问题。',
-      time: '刚刚',
       sources: response.sources || []
     })
   } catch (error) {
@@ -55,7 +53,6 @@ const sendMessage = async () => {
       id: messages.value.length + 1,
       type: 'bot',
       content: '抱歉，发生了错误：' + error.message,
-      time: '刚刚',
       sources: []
     })
   } finally {
@@ -113,7 +110,7 @@ const formatDate = (dateStr) => {
                   <span>{{ source.metadata?.file_name || source.metadata?.name || '文档' + (idx + 1) }}</span>
                 </div>
               </div>
-              <span class="message-time">{{ message.time }}</span>
+
             </div>
           </div>
 
@@ -340,16 +337,7 @@ const formatDate = (dateStr) => {
   }
 }
 
-.message-time {
-  font-size: 11px;
-  color: #9ca3af;
-  margin-top: 4px;
-  display: block;
-}
 
-.message-item.user .message-time {
-  text-align: right;
-}
 
 .chat-input {
   padding: 16px 24px;
