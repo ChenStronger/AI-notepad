@@ -11,6 +11,7 @@ const emit = defineEmits(['saved', 'cancel'])
 
 const noteStore = useNoteStore()
 const isEdit = ref(false)
+const saving = ref(false)
 const form = ref({
   title: '',
   content: '',
@@ -39,19 +40,32 @@ watch(() => props.note, (newNote) => {
   }
 }, { immediate: true })
 
-const saveNote = () => {
+const saveNote = async () => {
   if (!form.value.title.trim() && !form.value.content.trim()) {
     alert('请输入标题或内容')
     return
   }
 
-  if (isEdit.value) {
-    noteStore.updateNote(props.note.id, { ...form.value })
-  } else {
-    noteStore.addNote({ ...form.value })
-  }
+  saving.value = true
+  try {
+    const noteData = {
+      title: form.value.title,
+      content: form.value.content
+    }
 
-  emit('saved')
+    if (isEdit.value && props.note) {
+      await noteStore.updateNote(props.note.id, noteData)
+    } else {
+      await noteStore.createNote(noteData)
+    }
+
+    emit('saved')
+  } catch (error) {
+    console.error('保存笔记失败:', error)
+    alert('保存失败，请重试')
+  } finally {
+    saving.value = false
+  }
 }
 </script>
 
@@ -90,10 +104,10 @@ const saveNote = () => {
       </div>
 
       <div class="editor-footer">
-        <button @click="$emit('cancel')" class="btn btn-secondary">取消</button>
-        <button @click="saveNote" class="btn btn-primary">
+        <button @click="$emit('cancel')" class="btn btn-secondary" :disabled="saving">取消</button>
+        <button @click="saveNote" class="btn btn-primary" :disabled="saving">
           <Save class="icon" />
-          {{ isEdit ? '保存修改' : '保存' }}
+          {{ saving ? '保存中...' : (isEdit ? '保存修改' : '保存') }}
         </button>
       </div>
     </div>
@@ -322,7 +336,7 @@ const saveNote = () => {
   color: #64748b;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
   background: #cbd5e1;
   transform: translateY(-1px);
 }
@@ -333,8 +347,13 @@ const saveNote = () => {
   box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

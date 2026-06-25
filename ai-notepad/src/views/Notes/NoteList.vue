@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { FileText, Edit3, Trash2, Plus, Search, Calendar, Clock, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-vue-next'
 import { useNoteStore } from '@/stores/note'
 import NoteEditor from './NoteEditor.vue'
@@ -8,12 +8,17 @@ const noteStore = useNoteStore()
 const showEditor = ref(false)
 const editingNote = ref(null)
 const searchQuery = ref('')
-const selectedYear = ref(new Date().getFullYear())
-const selectedMonth = ref(String(new Date().getMonth() + 1).padStart(2, '0'))
-const selectedDay = ref(String(new Date().getDate()).padStart(2, '0'))
+const selectedYear = ref('')
+const selectedMonth = ref('')
+const selectedDay = ref('')
 
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+// 页面加载时获取数据
+onMounted(() => {
+  noteStore.fetchNotes()
+})
 
 const openEditor = (note = null) => {
   editingNote.value = note
@@ -46,28 +51,35 @@ const allFilteredNotes = computed(() => {
     )
   }
 
-  if (selectedYear.value && selectedMonth.value && selectedDay.value) {
-    const filterDate = `${selectedYear.value}-${selectedMonth.value}-${selectedDay.value}`
+  // 日期过滤：支持年份、月份、日期单独或组合搜索
+  if (selectedYear.value || selectedMonth.value || selectedDay.value) {
     notes = notes.filter(note => {
-      const noteDate = new Date(note.createdAt).toISOString().split('T')[0]
-      return noteDate === filterDate
+      const noteDate = new Date(note.createdAt || note.created_at)
+      const noteYear = noteDate.getFullYear().toString()
+      const noteMonth = String(noteDate.getMonth() + 1).padStart(2, '0')
+      const noteDay = String(noteDate.getDate()).padStart(2, '0')
+
+      // 检查年份匹配
+      if (selectedYear.value && noteYear !== selectedYear.value.toString()) {
+        return false
+      }
+
+      // 检查月份匹配
+      if (selectedMonth.value && noteMonth !== selectedMonth.value) {
+        return false
+      }
+
+      // 检查日期匹配
+      if (selectedDay.value && noteDay !== selectedDay.value) {
+        return false
+      }
+
+      return true
     })
   }
 
-  return notes.length > 0 ? notes : [
-    { id: 1, title: 'Vue3 学习笔记', content: '组合式API基础、响应式原理、生命周期钩子...', createdAt: new Date('2024-01-15').toISOString() },
-    { id: 2, title: '项目需求文档', content: '用户登录模块、数据统计分析、报表导出功能...', createdAt: new Date('2024-01-16').toISOString() },
-    { id: 3, title: '会议记录', content: '讨论了Q1目标、技术方案选型、时间节点安排...', createdAt: new Date('2024-01-17').toISOString() },
-    { id: 4, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
-    { id: 5, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
-    { id: 6, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
-    { id: 7, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
-    { id: 8, title: '代码审查要点', content: '检查代码风格、性能优化、安全漏洞防范...', createdAt: new Date('2024-01-18').toISOString() },
-    { id: 9, title: '技术方案设计', content: '微服务架构设计、数据库选型、接口规范制定...', createdAt: new Date('2024-01-19').toISOString() },
-    { id: 10, title: '数据库设计', content: '数据库表结构设计、索引优化、数据迁移方案...', createdAt: new Date('2024-01-20').toISOString() },
-    { id: 11, title: 'API接口文档', content: 'RESTful API设计规范、接口认证方式、错误处理...', createdAt: new Date('2024-01-21').toISOString() },
-    { id: 12, title: '前端性能优化', content: '代码分割、懒加载、缓存策略、CDN加速...', createdAt: new Date('2024-01-22').toISOString() }
-  ]
+  console.log('Filtered notes:', notes.length, 'Total:', noteStore.notes.length)
+  return notes
 })
 
 const totalPages = computed(() => {
@@ -107,6 +119,12 @@ const goToLastPage = () => {
 
 const handleSearch = () => {
   currentPage.value = 1
+}
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleString('zh-CN')
 }
 </script>
 
@@ -159,7 +177,7 @@ const handleSearch = () => {
         <div v-for="(note, index) in filteredNotes" :key="note.id" class="table-row">
           <div class="td td-index">{{ index + 1 }}</div>
           <div class="td td-title" @click="openEditor(note)">{{ note.title || '无标题' }}</div>
-          <div class="td td-time">{{ new Date(note.createdAt).toLocaleString('zh-CN') }}</div>
+          <div class="td td-time">{{ formatDate(note.created_at || note.createdAt) }}</div>
           <div class="td td-remark">{{ note.content?.substring(0, 30) }}{{ note.content?.length > 30 ? '...' : '' }}
           </div>
           <div class="td td-action">

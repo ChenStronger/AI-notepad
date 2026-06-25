@@ -1,23 +1,21 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Upload, Sparkles, Send, Bot, User, Eye, Trash2, FileText, FileImage, File } from 'lucide-vue-next'
+import { useKnowledgeStore } from '@/stores/knowledge'
 
-const knowledgeItems = ref([
-  { id: 1, title: 'Vue3入门指南.pdf', content: 'Vue3是Vue.js的最新版本，采用组合式API', category: '技术文档', uploadTime: '2024-01-15 10:30', size: '2.3 MB', type: 'pdf' },
-  { id: 2, title: 'JavaScript高级技巧.docx', content: '深入理解闭包、原型链、异步编程', category: '技术文档', uploadTime: '2024-01-16 14:20', size: '1.8 MB', type: 'word' },
-  { id: 3, title: '项目开发规范.md', content: '代码风格指南、Git工作流、代码审查', category: '规范文档', uploadTime: '2024-01-17 09:15', size: '45 KB', type: 'markdown' },
-  { id: 4, title: 'API接口文档.pdf', content: 'RESTful API设计规范、接口认证', category: '技术文档', uploadTime: '2024-01-18 16:45', size: '3.1 MB', type: 'pdf' },
-  { id: 5, title: '数据库设计原则.docx', content: '关系型数据库设计范式', category: '技术文档', uploadTime: '2024-01-19 11:00', size: '2.5 MB', type: 'word' },
-  { id: 6, title: 'Git使用指南.md', content: 'Git基础命令、分支管理', category: '规范文档', uploadTime: '2024-01-20 13:30', size: '32 KB', type: 'markdown' },
-  { id: 7, title: '代码审查清单.md', content: '代码质量检查、安全漏洞防范', category: '规范文档', uploadTime: '2024-01-21 10:15', size: '28 KB', type: 'markdown' },
-  { id: 8, title: '部署运维手册.pdf', content: 'Docker容器化、CI/CD流程', category: '其他', uploadTime: '2024-01-22 15:00', size: '4.2 MB', type: 'pdf' },
-  { id: 9, title: '性能优化实践.docx', content: '前端性能优化、后端缓存策略', category: '技术文档', uploadTime: '2024-01-23 09:45', size: '1.9 MB', type: 'word' }
-])
+const knowledgeStore = useKnowledgeStore()
+
+// 从API获取知识库文档
+const knowledgeItems = computed(() => knowledgeStore.documents)
 
 const isDragging = ref(false)
 const isUploading = ref(false)
 const uploadProgress = ref(0)
 const currentUploadFile = ref(null)
+
+onMounted(() => {
+  knowledgeStore.fetchDocuments()
+})
 
 const allowedTypes = {
   'application/pdf': 'pdf',
@@ -130,18 +128,7 @@ const uploadFile = async (file) => {
 
   await new Promise(resolve => setTimeout(resolve, 300))
 
-  const now = new Date()
-  const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-
-  knowledgeItems.value.unshift({
-    id: Date.now(),
-    title: file.name,
-    content: `上传的文件内容摘要...`,
-    category: '技术文档',
-    uploadTime: timeStr,
-    size: formatFileSize(file.size),
-    type: getFileType(file)
-  })
+  knowledgeStore.fetchDocuments()
 
   isUploading.value = false
   currentUploadFile.value = null
@@ -149,19 +136,17 @@ const uploadFile = async (file) => {
 }
 
 const viewDocument = (item) => {
-  alert(`查看文档: ${item.title}\n\n类型: ${item.type.toUpperCase()}\n大小: ${item.size}\n上传时间: ${item.uploadTime}`)
+  alert(`查看文档: ${item.name || item.title}\n\n类型: ${item.file_type || 'unknown'}\n大小: ${item.file_size ? formatFileSize(item.file_size) : '未知'}\n上传时间: ${item.created_at || '未知'}`)
 }
 
 const deleteDocument = (id) => {
   if (confirm('确定要删除这个文档吗？')) {
-    knowledgeItems.value = knowledgeItems.value.filter(item => item.id !== id)
+    knowledgeStore.deleteDocument(id)
   }
 }
 
 const messages = ref([
-  { id: 1, type: 'bot', content: '您好！我是您的AI助手，有什么可以帮助您的吗？', time: '刚刚' },
-  { id: 2, type: 'user', content: '请介绍一下Vue3的组合式API', time: '刚刚' },
-  { id: 3, type: 'bot', content: 'Vue3的组合式API（Composition API）是Vue3引入的新特性，它提供了更灵活的代码组织方式，使得逻辑复用更加简单。主要包括ref、reactive、computed、watch等核心函数。', time: '刚刚' }
+  { id: 1, type: 'bot', content: '您好！我是您的AI助手，有什么可以帮助您的吗？', time: '刚刚' }
 ])
 
 const newMessage = ref('')
@@ -254,11 +239,16 @@ const sendMessage = () => {
           </div>
 
           <div class="knowledge-list">
+            <div v-if="knowledgeItems.length === 0" class="empty-state">
+              <FileText class="empty-icon" />
+              <p>暂无知识库文档</p>
+              <span>上传文档以开始构建您的知识库</span>
+            </div>
             <div v-for="(item, index) in knowledgeItems" :key="item.id" class="knowledge-card">
               <span class="card-index">{{ index + 1 }}</span>
               <div class="card-info">
-                <h3 class="card-title">{{ item.title }}</h3>
-                <span class="card-time">{{ item.uploadTime }}</span>
+                <h3 class="card-title">{{ item.name || item.title }}</h3>
+                <span class="card-time">{{ item.created_at || item.uploadTime }}</span>
               </div>
               <div class="card-actions">
                 <button @click="viewDocument(item)" class="action-btn view-btn">
@@ -285,76 +275,6 @@ const sendMessage = () => {
   flex-direction: column;
   background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 50%, #f8fafc 100%);
   background-attachment: fixed;
-}
-
-.home-header {
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4c1d95 70%, #7c3aed 100%);
-  color: white;
-  padding: 30px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(76, 29, 149, 0.3);
-}
-
-.home-header::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 300px;
-  height: 300px;
-  background: rgba(102, 126, 234, 0.1);
-  border-radius: 50%;
-}
-
-.home-header::after {
-  content: '';
-  position: absolute;
-  bottom: -30%;
-  left: -10%;
-  width: 200px;
-  height: 200px;
-  background: rgba(118, 75, 162, 0.1);
-  border-radius: 50%;
-}
-
-.header-content {
-  position: relative;
-  z-index: 1;
-}
-
-.header-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 12px;
-  opacity: 0.95;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.home-header h1 {
-  margin: 0 0 10px 0;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-.home-header p {
-  margin: 0;
-  font-size: 15px;
-  opacity: 0.85;
 }
 
 .home-content {
@@ -680,6 +600,32 @@ const sendMessage = () => {
   flex-direction: column;
   gap: 10px;
   min-height: 435px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.empty-state span {
+  font-size: 12px;
 }
 
 .knowledge-card {

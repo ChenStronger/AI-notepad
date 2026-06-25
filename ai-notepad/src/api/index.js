@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const api = axios.create({
   baseURL: '/api',
-  timeout: 10000,
+  timeout: 60000, // AI问答需要更长的超时时间（60秒）
   headers: {
     'Content-Type': 'application/json'
   }

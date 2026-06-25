@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pymysql
+sqlalchemy
+langchain
+langchain-ollama
+langchain-chroma
+langchain-community
+chromadb
+pydantic
+python-multipart
+pypdf
+python-docx

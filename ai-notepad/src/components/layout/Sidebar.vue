@@ -1,18 +1,19 @@
 <script setup>
-import { Home, FileText, BookOpen } from 'lucide-vue-next'
+import { FileText, BookOpen, Library, MessageCircle } from 'lucide-vue-next'
 
 defineProps({
   activeTab: {
     type: String,
-    default: 'home'
+    default: 'chat'
   }
 })
 
 const emit = defineEmits(['change-tab'])
 
 const menuItems = [
-  { id: 'home', label: '主页', icon: Home },
-  { id: 'notes', label: '记事本', icon: FileText }
+  { id: 'chat', label: '智能问答', icon: MessageCircle },
+  { id: 'notes', label: '记事本', icon: FileText },
+  { id: 'knowledge', label: '知识库', icon: Library }
 ]
 </script>
 

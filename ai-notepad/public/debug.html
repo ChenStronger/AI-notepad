@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文档预览调试工具</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f3f4f6;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            margin: 0 0 16px 0;
+            color: #1f2937;
+            font-size: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+        
+        .status {
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+        
+        .status.success {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .status.warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        
+        .btn:hover {
+            background: #2563eb;
+        }
+        
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .log {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .doc-item {
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        
+        .doc-item:hover {
+            background: #f9fafb;
+        }
+        
+        .doc-item .name {
+            font-weight: 500;
+        }
+        
+        .doc-item .meta {
+            font-size: 12px;
+            color: #6b7280;
+        }
+        
+        .preview-content {
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.6;
+            color: #374151;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align:center; color:#1f2937; margin-bottom:20px;">文档预览调试工具</h1>
+        
+        <!-- 步骤1: 检查后端连接 -->
+        <div class="section">
+            <h2>1. 检查后端服务</h2>
+            <button class="btn" onclick="checkBackend()">检查后端连接</button>
+            <div id="backendStatus" class="status hidden"></div>
+            <div id="backendLog" class="log hidden"></div>
+        </div>
+        
+        <!-- 步骤2: 获取文档列表 -->
+        <div class="section">
+            <h2>2. 获取文档列表</h2>
+            <button class="btn" onclick="fetchDocs()">获取文档列表</button>
+            <div id="docsList" class="hidden"></div>
+        </div>
+        
+        <!-- 步骤3: 预览文档 -->
+        <div class="section">
+            <h2>3. 预览文档内容</h2>
+            <div id="previewArea" style="min-height: 200px;">
+                <p style="color:#9ca3af;">请先选择文档</p>
+            </div>
+        </div>
+        
+        <!-- 步骤4: 调试信息 -->
+        <div class="section">
+            <h2>4. 调试信息</h2>
+            <button class="btn" onclick="showDebugInfo()">显示调试信息</button>
+            <div id="debugInfo" class="log hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        let documents = [];
+
+        async function checkBackend() {
+            const status = document.getElementById('backendStatus');
+            const log = document.getElementById('backendLog');
+            
+            status.className = 'status';
+            status.textContent = '检查中...';
+            status.classList.remove('hidden', 'success', 'error', 'warning');
+            
+            try {
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    status.className = 'status success';
+                    status.textContent = '✓ 后端服务正常';
+                    log.textContent = JSON.stringify(data, null, 2);
+                    log.classList.remove('hidden');
+                } else {
+                    status.className = 'status error';
+                    status.textContent = '✗ 后端服务异常';
+                    log.textContent = `HTTP ${response.status}: ${response.statusText}`;
+                    log.classList.remove('hidden');
+                }
+            } catch (error) {
+                status.className = 'status error';
+                status.textContent = '✗ 无法连接到后端服务';
+                log.textContent = `错误: ${error.message}\n\n可能原因:\n1. 后端服务未运行\n2. CORS问题\n3. 网络连接问题`;
+                log.classList.remove('hidden');
+            }
+        }
+
+        async function fetchDocs() {
+            const list = document.getElementById('docsList');
+            
+            try {
+                const response = await fetch('/api/documents/');
+                if (response.ok) {
+                    documents = await response.json();
+                    
+                    if (documents.length === 0) {
+                        list.innerHTML = '<p style="color:#9ca3af;">暂无文档</p>';
+                    } else {
+                        list.innerHTML = documents.map(doc => `
+                            <div class="doc-item" onclick="previewDoc(${doc.id})">
+                                <div class="name">${doc.name}</div>
+                                <div class="meta">
+                                    ID: ${doc.id} | 类型: ${doc.file_type} | 状态: ${doc.embedding_status}
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                    list.classList.remove('hidden');
+                } else {
+                    list.innerHTML = `<p style="color:#dc2626;">获取文档列表失败: ${response.status}</p>`;
+                    list.classList.remove('hidden');
+                }
+            } catch (error) {
+                list.innerHTML = `<p style="color:#dc2626;">错误: ${error.message}</p>`;
+                list.classList.remove('hidden');
+            }
+        }
+
+        async function previewDoc(docId) {
+            const area = document.getElementById('previewArea');
+            area.innerHTML = '<p style="color:#6b7280;">加载中...</p>';
+            
+            try {
+                const response = await fetch(`/api/documents/${docId}`);
+                if (response.ok) {
+                    const doc = await response.json();
+                    
+                    if (doc.content && doc.content.length > 0) {
+                        area.innerHTML = `
+                            <h3 style="margin-bottom:12px; color:#1f2937;">${doc.name}</h3>
+                            <div class="preview-content">${doc.content}</div>
+                        `;
+                    } else {
+                        area.innerHTML = '<p style="color:#d97706;">⚠ 文档内容为空</p>';
+                    }
+                } else {
+                    area.innerHTML = `<p style="color:#dc2626;">获取文档失败: ${response.status}</p>`;
+                }
+            } catch (error) {
+                area.innerHTML = `<p style="color:#dc2626;">错误: ${error.message}</p>`;
+            }
+        }
+
+        function showDebugInfo() {
+            const info = document.getElementById('debugInfo');
+            const data = {
+                browser: navigator.userAgent,
+                origin: window.location.origin,
+                apiBase: '/api/',
+                timestamp: new Date().toISOString()
+            };
+            info.textContent = JSON.stringify(data, null, 2);
+            info.classList.remove('hidden');
+        }
+
+        // 页面加载时自动检查
+        window.onload = function() {
+            checkBackend();
+        };
+    </script>
+</body>
+</html>
