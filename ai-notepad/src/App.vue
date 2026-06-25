@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import Sidebar from '@/components/layout/Sidebar.vue'
-import HomeView from '@/views/HomeView.vue'
 import NoteList from '@/views/Notes/NoteList.vue'
+import KnowledgeBase from '@/views/Knowledge/KnowledgeBase.vue'
+import ChatView from '@/views/Chat/ChatView.vue'
 
-const currentTab = ref('home')
+const currentTab = ref('chat')
 
 const changeTab = (tabId) => {
   currentTab.value = tabId
@@ -16,8 +17,9 @@ const changeTab = (tabId) => {
     <Sidebar :active-tab="currentTab" @change-tab="changeTab" />
 
     <main class="app-main">
-      <HomeView v-if="currentTab === 'home'" />
+      <ChatView v-if="currentTab === 'chat'" />
       <NoteList v-else-if="currentTab === 'notes'" />
+      <KnowledgeBase v-else-if="currentTab === 'knowledge'" />
     </main>
   </div>
 </template>
